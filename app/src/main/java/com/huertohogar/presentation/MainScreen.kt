@@ -1,39 +1,35 @@
 package com.huertohogar.presentation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.huertohogar.R
 import com.huertohogar.data.model.Product
 import com.huertohogar.presentation.home.HomeScreen
+import com.huertohogar.presentation.products.ProductsScreen
 import com.huertohogar.presentation.login.LoginScreen
 import com.huertohogar.presentation.registro.RegistroScreen
 import com.huertohogar.presentation.cart.CartScreen
@@ -42,9 +38,13 @@ import com.huertohogar.presentation.about.AboutScreen
 import com.huertohogar.presentation.blog.BlogScreen
 import com.huertohogar.presentation.profile.OrderHistoryScreen
 import com.huertohogar.presentation.profile.LogoutScreen
+import com.huertohogar.presentation.profile.ProfileScreen
+import com.huertohogar.presentation.productdetail.ProductDetailScreen
+import com.huertohogar.presentation.map.MapScreen
+import com.huertohogar.presentation.payment.PaymentScreen
 import com.huertohogar.presentation.components.Error404Screen
 
-// 1. 🔁 Rutas de Navegación extendidas
+//   Rutas de Navegacion extendidas
 sealed class Screen(val route: String, val icon: androidx.compose.ui.graphics.vector.ImageVector?, val label: String) {
     object Home : Screen("home", Icons.Default.Home, "Inicio")
     object Products : Screen("products", Icons.Default.ShoppingCart, "Productos")
@@ -59,6 +59,18 @@ sealed class Screen(val route: String, val icon: androidx.compose.ui.graphics.ve
     object OrderHistory : Screen("order_history", null, "Historial")
     object Logout : Screen("logout", null, "Cerrar Sesión")
     object NotFound : Screen("404", null, "No Encontrada")
+    object ProductDetail : Screen("product_detail/{productId}", null, "Detalle Producto") {
+        fun createRoute(productId: String) = "product_detail/$productId"
+    }
+    object Map : Screen("map", null, "Mapa")
+    object Payment : Screen("payment/{orderId}/{amount}", null, "Pago") {
+        fun createRoute(orderId: String, amount: Double) = "payment/$orderId/$amount"
+    }
+    // Rutas de Admin
+    object AdminProducts : Screen("admin/products", null, "Admin Productos")
+    object AdminUsers : Screen("admin/users", null, "Admin Usuarios")
+    object AdminSales : Screen("admin/sales", null, "Reporte Ventas")
+    object AdminDashboard : Screen("admin/dashboard", null, "Panel Admin")
 }
 
 @Composable
@@ -72,15 +84,43 @@ fun MainScreen() {
     }
 }
 
-// 2. 🧭 AppNavHost modificado para incluir todas las rutas
+// AppNavHost  incluye todas las rutas con animaciones
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier) {
-    NavHost(navController = navController, startDestination = Screen.Home.route, modifier = modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Home.route,
+        modifier = modifier,
+        enterTransition = {
+            fadeIn(animationSpec = tween(300)) + slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(300)
+            )
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(300)) + slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = tween(300)
+            )
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(300)) + slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = tween(300)
+            )
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(300)) + slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = tween(300)
+            )
+        }
+    ) {
         composable(Screen.Home.route) { HomeScreen(navController) }
-        composable(Screen.Products.route) { Text("Pantalla Productos") }
+        composable(Screen.Products.route) { ProductsScreen(navController) }
         composable(Screen.About.route) { AboutScreen(navController) }
         composable(Screen.Blog.route) { BlogScreen(navController) }
-        composable(Screen.Profile.route) { Text("Pantalla Perfil (Placeholder)") }
+        composable(Screen.Profile.route) { ProfileScreen(navController) }
 
         // Rutas funcionales
         composable(Screen.Login.route) { LoginScreen(navController) }
@@ -90,13 +130,72 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier) {
         composable(Screen.OrderHistory.route) { OrderHistoryScreen(navController) }
         composable(Screen.Logout.route) { LogoutScreen(navController) }
         composable(Screen.NotFound.route) { Error404Screen(navController) }
-
-        // Manejo de rutas desconocidas
-        composable("{*url}") { Error404Screen(navController) }
+        
+        // Detalle de producto con reseñas
+        composable(
+            route = Screen.ProductDetail.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("productId") {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId") ?: ""
+            ProductDetailScreen(productId = productId, navController = navController)
+        }
+        
+        // Mapa de las tiendas
+        composable(Screen.Map.route) { MapScreen(navController) }
+        
+        // Pantalla de pago
+        composable(
+            route = Screen.Payment.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("orderId") {
+                    type = androidx.navigation.NavType.StringType
+                },
+                androidx.navigation.navArgument("amount") {
+                    type = androidx.navigation.NavType.FloatType
+                }
+            )
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            val amount = backStackEntry.arguments?.getFloat("amount")?.toDouble() ?: 0.0
+            PaymentScreen(
+                orderId = orderId,
+                totalAmount = amount,
+                navController = navController
+            )
+        }
+        
+        // Rutas de Admin
+        composable(Screen.AdminProducts.route) { 
+            com.huertohogar.presentation.admin.AdminProductsScreen(navController) 
+        }
+        composable(Screen.AdminUsers.route) { 
+            com.huertohogar.presentation.admin.AdminUsersScreen(navController) 
+        }
+        composable(Screen.AdminSales.route) { 
+            com.huertohogar.presentation.admin.AdminSalesScreen(navController) 
+        }
+        composable(Screen.AdminDashboard.route) { 
+            com.huertohogar.presentation.admin.AdminDashboardScreen(navController) 
+        }
+        
+        // Manejo de rutas desconocidas - comentado para evitar que capture todas las rutas
+        // Si necesitas mostrar 404, mejor manejar rutas específicas desconocidas
+        // composable(
+        //     route = "{url}",
+        //     arguments = listOf(androidx.navigation.navArgument("url") {
+        //         type = androidx.navigation.NavType.StringType
+        //     })
+        // ) { backStackEntry ->
+        //     Error404Screen(navController)
+        // }
     }
 }
 
-// 3. Barra de Navegación Inferior
+// Barra de Navegacion Inferior
 @Composable
 fun AppBottomBar(navController: NavHostController) {
     val items = listOf(Screen.Home, Screen.Products, Screen.Profile) // Solo rutas con iconos
@@ -106,12 +205,12 @@ fun AppBottomBar(navController: NavHostController) {
     NavigationBar {
         items.forEach { screen ->
             NavigationBarItem(
-                // 🔑 CORRECCIÓN DEL ERROR: Usar !! para afirmar que el icono no es nulo
+
                 icon = { Icon(screen.icon!!, contentDescription = screen.label) },
                 label = { Text(screen.label) },
                 selected = currentRoute == screen.route,
                 onClick = { navController.navigate(screen.route) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                    popUpTo(navController.graph.findStartDestination().id) { this.saveState = true }
                     launchSingleTop = true
                     restoreState = true
                 }}
@@ -120,10 +219,20 @@ fun AppBottomBar(navController: NavHostController) {
     }
 }
 
-// 4. App Bar (Top Bar)
+// App Bar (Top Bar)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(navController: NavHostController) {
+    val context = LocalContext.current
+    // Obtener el ViewModel del carrito para el contador dinámico
+    val cartViewModel: com.huertohogar.presentation.cart.CartViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = com.huertohogar.presentation.cart.CartViewModel.Factory(
+            context.applicationContext as android.app.Application
+        )
+    )
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val cartItemCount = cartItems.sumOf { it.quantity }
+
     TopAppBar(
         title = {
             Row {
@@ -140,13 +249,29 @@ fun AppBar(navController: NavHostController) {
             }
         },
         actions = {
+            // Icono de Compartir App
+            IconButton(onClick = { 
+                com.huertohogar.utils.ShareHelper.shareApp(context)
+            }) {
+                Icon(Icons.Default.Share, contentDescription = "Compartir app", tint = Color.Black)
+            }
             // Icono de Login/Perfil
             IconButton(onClick = { navController.navigate(Screen.Login.route) }) {
                 Icon(Icons.Default.Person, contentDescription = "Perfil/Login", tint = Color.Black)
             }
-            // Icono de Carrito con contador (Badge)
+            // Icono de Carrito con contador dinámico (Badge)
             IconButton(onClick = { navController.navigate(Screen.Cart.route) }) {
-                BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.secondary) { Text("3") } }) {
+                if (cartItemCount > 0) {
+                    BadgedBox(
+                        badge = { 
+                            Badge(containerColor = MaterialTheme.colorScheme.secondary) { 
+                                Text(cartItemCount.toString()) 
+                            } 
+                        }
+                    ) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito", tint = Color.Black)
+                    }
+                } else {
                     Icon(Icons.Default.ShoppingCart, contentDescription = "Carrito", tint = Color.Black)
                 }
             }
@@ -155,7 +280,7 @@ fun AppBar(navController: NavHostController) {
     )
 }
 
-// 5. Tarjeta de Producto Reutilizable (ProductCard)
+// Tarjeta de Producto Reutilizable (ProductCard)
 @Composable
 fun ProductCard(product: Product) {
     Card(
@@ -167,7 +292,7 @@ fun ProductCard(product: Product) {
             Box(
                 modifier = Modifier.fillMaxWidth().height(150.dp).background(Color.Gray.copy(alpha = 0.1f))
             ) {
-                // Placeholder para la imagen real (debe usar R.drawable.tu_imagen_id)
+              
                 // Image(painter = painterResource(id = R.drawable.placeholder), contentDescription = null)
 
                 // Etiqueta "Frescos"
@@ -183,13 +308,15 @@ fun ProductCard(product: Product) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(text = product.name, style = MaterialTheme.typography.titleMedium)
                 Row(modifier = Modifier.padding(top = 4.dp)) {
-                    Text(text = product.price, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(text = "$${product.price}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = product.oldPrice,
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
-                    )
+                    product.oldPrice?.let { oldPrice -> // <-- Condicional y formato
+                        Text(
+                            text = "$${oldPrice}", // <-- Formato a String
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough)
+                        )
+                    }
                 }
                 Button(
                     onClick = { /* Añadir al carrito */ },

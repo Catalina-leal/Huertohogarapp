@@ -1,7 +1,6 @@
 package com.huertohogar.presentation.registro
 
 import android.app.Application
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,7 +33,7 @@ fun RegistroScreen(
         factory = AuthViewModel.Factory(LocalContext.current.applicationContext as Application)
     )
 ) {
-    // 🧠 Estados de campos y UI
+    // manejo de estados de campos y UI
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -45,13 +44,13 @@ fun RegistroScreen(
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
 
-    // 💡 Efecto para manejar el resultado del registro y la navegación
+    // Efecto para manejar el resultado del registro y la navegación
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Success -> {
                 snackbarMessage.value = "Registro exitoso. ¡Bienvenido!"
                 showSnackbar.value = true
-                // Navegar a la Home y limpiar la pila después del registro exitoso
+                // Navega a la Home y limpia la pila después del registro exitoso
                 navController.navigate(Screen.Home.route) {
                     popUpTo(navController.graph.id) { inclusive = true }
                 }
@@ -138,7 +137,7 @@ fun RegistroScreen(
                         showSnackbar.value = true
                     }
                 },
-                // Deshabilitar si está cargando o las contraseñas no coinciden
+                // Deshabilita si está cargando o las contraseñas no coinciden
                 enabled = authState != AuthUiState.Loading && password == confirmPassword && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {

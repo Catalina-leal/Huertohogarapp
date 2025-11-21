@@ -11,31 +11,31 @@ import kotlinx.coroutines.flow.Flow
 interface CartDao {
 
     /**
-     * Devuelve una lista reactiva (Flow) de todos los ítems en el carrito.
+     * aca Devolvemos una lista reactiva (Flow) de todos los ítems en el carrito.
      */
     @Query("SELECT * FROM cart_items")
     fun getAllCartItems(): Flow<List<CartItem>>
 
     /**
-     * Inserta un nuevo ítem o reemplaza uno existente (si el productId coincide).
+     * esta linea Inserta un nuevo ítem o reemplaza uno existente (si el productId coincide).
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: CartItem)
 
     /**
-     * Actualiza un ítem existente.
+     * Actualizamos  un ítem existente.
      */
     @Update
     suspend fun update(item: CartItem)
 
     /**
-     * Elimina un ítem específico del carrito por su ID de producto.
+     * Eliminamos un ítem específico del carrito por su ID de producto.
      */
     @Query("DELETE FROM cart_items WHERE product_id = :productId")
     suspend fun deleteItemById(productId: String)
 
     /**
-     * Elimina todos los ítems del carrito.
+     * Eliminamos todos los ítems del carrito.
      */
     @Query("DELETE FROM cart_items")
     suspend fun clearAll()

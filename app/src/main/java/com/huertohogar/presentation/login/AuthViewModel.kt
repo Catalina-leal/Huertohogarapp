@@ -4,45 +4,84 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.huertohogar.data.db.AppDatabase
+import com.huertohogar.data.model.User
 import com.huertohogar.data.repository.UserPreferencesRepository
-import kotlinx.coroutines.delay
+import com.huertohogar.data.repository.UserRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
-// 🧠 Clase Sellada para manejar los estados de la UI de autenticación
+//nuestras Clases Selladas para el manejo de los estados de la UI de autenticacion
 sealed class AuthUiState {
     object Idle : AuthUiState()
     object Loading : AuthUiState()
     data class Success(val user: String) : AuthUiState()
-    object LoggedOut : AuthUiState() // ⬅️ CORRECCIÓN: Definición agregada
+    object LoggedOut : AuthUiState()
     data class Error(val message: String) : AuthUiState()
 }
 
 /**
- * ViewModel para manejar la lógica de Login, Registro y Cierre de Sesión.
+ * nuestro ViewModel para  el manejo de la logica de Login, Registro y Cierre de Sesion.
  */
 class AuthViewModel(
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState
 
-    // 💡 Estado de sesión que se lee directamente de DataStore
+    // Estado de sesion que se lee directamente de DataStore
     val isLoggedIn: StateFlow<Boolean> = preferencesRepository.isLoggedIn.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
 
+    val currentUserEmail: StateFlow<String?> = preferencesRepository.userEmail.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
-    // 1. FUNCIÓN LOGIN
+    // Validacion de email
+    private fun isValidEmail(email: String): Boolean {
+        val emailPattern = Pattern.compile(
+            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$"
+        )
+        return emailPattern.matcher(email).matches()
+    }
+
+    // Validacion de contraseña con restriccion de un minimo de 6 caracteres.
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6
+    }
+
+    // nuestra funcion de login con validacion
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            delay(1500)
 
-            if (email == "test@huerto.cl" && password == "123456") {
+            // Validaciones
+            if (email.isBlank()) {
+                _uiState.value = AuthUiState.Error("El correo electrónico es requerido")
+                return@launch
+            }
+
+            if (!isValidEmail(email)) {
+                _uiState.value = AuthUiState.Error("El formato del correo electrónico no es válido")
+                return@launch
+            }
+
+            if (password.isBlank()) {
+                _uiState.value = AuthUiState.Error("La contraseña es requerida")
+                return@launch
+            }
+
+            // Intenta el login con UserRepository
+            val user = userRepository.loginUser(email, password)
+            if (user != null) {
                 preferencesRepository.saveLoginState(email)
                 _uiState.value = AuthUiState.Success(email)
             } else {
@@ -51,50 +90,84 @@ class AuthViewModel(
         }
     }
 
-    // 2. FUNCIÓN REGISTRO
+    // Funcion de registro con validaciones
     fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            delay(2000)
 
-            if (name.isNotBlank() && email.contains("@")) {
+            // Validaciones
+            if (name.isBlank()) {
+                _uiState.value = AuthUiState.Error("El nombre es requerido")
+                return@launch
+            }
+
+            if (name.length < 3) {
+                _uiState.value = AuthUiState.Error("El nombre debe tener al menos 3 caracteres")
+                return@launch
+            }
+
+            if (email.isBlank()) {
+                _uiState.value = AuthUiState.Error("El correo electrónico es requerido")
+                return@launch
+            }
+
+            if (!isValidEmail(email)) {
+                _uiState.value = AuthUiState.Error("El formato del correo electrónico no es válido")
+                return@launch
+            }
+
+            if (password.isBlank()) {
+                _uiState.value = AuthUiState.Error("La contraseña es requerida")
+                return@launch
+            }
+
+            if (!isValidPassword(password)) {
+                _uiState.value = AuthUiState.Error("La contraseña debe tener al menos 6 caracteres")
+                return@launch
+            }
+
+            // Crea un usuario y lo guarda  en la BD
+            val newUser = User(
+                email = email,
+                password = password, // En produccion debería estar hasheado
+                fullName = name
+            )
+
+            val success = userRepository.registerUser(newUser)
+            if (success) {
                 preferencesRepository.saveLoginState(email)
                 _uiState.value = AuthUiState.Success(email)
             } else {
-                _uiState.value = AuthUiState.Error("Fallo al registrar usuario. Verifique los datos.")
+                _uiState.value = AuthUiState.Error("El correo electrónico ya está registrado")
             }
         }
     }
 
-    // 3. FUNCIÓN LOGOUT
+    // funcion logout para cerrar sesion
     fun logout() {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-
-            // 🔐 Borrar estado de DataStore
             preferencesRepository.clearLoginState()
-            delay(500) // Simular retardo de cierre
-
-            // 🔑 CORRECCIÓN: Asigna el estado LoggedOut usando el prefijo de la clase
             _uiState.value = AuthUiState.LoggedOut
         }
     }
 
-    // Función para resetear el estado de la UI (útil después de un error o navegación)
+    // Funcion para resetear el estado de la UI
     fun resetUiState() {
         _uiState.value = AuthUiState.Idle
     }
 
-    // 🔑 FACTORY para instanciar el ViewModel
+    // factory para instanciar el ViewModel
     class Factory(private val application: Application) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-
-                // 1. Crear el Repositorio de Preferencias (DataStore)
+                val database = AppDatabase.getDatabase(application)
+                val userDao = database.userDao()
                 val preferencesRepo = UserPreferencesRepository(application.applicationContext)
+                val userRepository = UserRepository(userDao)
 
                 @Suppress("UNCHECKED_CAST")
-                return AuthViewModel(preferencesRepo) as T
+                return AuthViewModel(preferencesRepo, userRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

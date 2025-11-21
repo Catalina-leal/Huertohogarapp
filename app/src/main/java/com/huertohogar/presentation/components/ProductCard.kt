@@ -24,22 +24,42 @@ import androidx.compose.ui.unit.dp
 import com.huertohogar.data.model.Product
 
 @Composable
-fun ProductCard(product: Product) {
-    // Lógica para cargar la imagen Drawable
+fun ProductCard(
+    product: Product,
+    onAddToCart: ((Product) -> Unit)? = null,
+    onViewDetails: ((Product) -> Unit)? = null
+) {
+    // aca manejamos la logica para cargar las imagenes desde la carpeta Drawable
     val context = LocalContext.current
-    val imageResId = remember(product.imageUrlName) {
-        context.resources.getIdentifier(
-            product.imageUrlName,
-            "drawable",
-            context.packageName
-        )
+    val imageResId: Int = remember(product.imageUrlName) {
+        try {
+            val resId: Int = context.resources.getIdentifier(
+                product.imageUrlName,
+                "drawable",
+                context.packageName
+            )
+            // Verificar que el recurso existe y es válido
+            if (resId != 0) {
+                try {
+                    // Verificar que el recurso es realmente un drawable válido
+                    val drawable = context.resources.getDrawable(resId, context.theme)
+                    if (drawable != null) resId else 0
+                } catch (e: Exception) {
+                    0
+                }
+            } else {
+                0
+            }
+        } catch (e: Exception) {
+            0
+        }
     }
 
     Card(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .clickable { /* Navegar a detalle */ },
+            .clickable { onViewDetails?.invoke(product) },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         // Sombra de la tarjeta (shadow = 0.07 en tu CSS)
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -53,7 +73,7 @@ fun ProductCard(product: Product) {
                     .height(150.dp)
                     .background(Color.LightGray.copy(alpha = 0.1f)) // bg-light
             ) {
-                // Implementación de la imagen
+                // como manejamos implementacion de la imagen
                 if (imageResId != 0) {
                     Image(
                         painter = painterResource(id = imageResId),
@@ -63,7 +83,11 @@ fun ProductCard(product: Product) {
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxSize().background(Color.LightGray)) {
-                        Text("No Image", modifier = Modifier.align(Alignment.Center))
+                        Text(
+                            "No Image",
+                            modifier = Modifier.align(Alignment.Center),
+                            color = Color.Gray
+                        )
                     }
                 }
 
@@ -101,20 +125,22 @@ fun ProductCard(product: Product) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     // Precio actual
                     Text(
-                        text = product.price,
+                        text = "$${String.format("%.0f", product.price)} / ${product.unit}",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    Spacer(Modifier.width(8.dp))
-                    // Precio anterior (tachado)
-                    Text(
-                        text = product.oldPrice,
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            textDecoration = TextDecoration.LineThrough
+                    // Precio anterior (tachado) si existe
+                    product.oldPrice?.let { oldPrice ->
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "$${String.format("%.0f", oldPrice)}",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                textDecoration = TextDecoration.LineThrough
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -128,7 +154,7 @@ fun ProductCard(product: Product) {
             ) {
                 // Botón 'Ver detalles'
                 TextButton(
-                    onClick = { /* Navegar a product-detail */ },
+                    onClick = { onViewDetails?.invoke(product) },
                     modifier = Modifier.weight(1f), // w-50
                     contentPadding = PaddingValues(0.dp)
                 ) {
@@ -138,14 +164,14 @@ fun ProductCard(product: Product) {
                 }
 
                 // Divisor (border-end)
-                Divider(
+                HorizontalDivider(
                     color = Color.LightGray,
                     modifier = Modifier.width(1.dp).fillMaxHeight(0.8f)
                 )
 
                 // Botón 'Añadir al carrito'
                 TextButton(
-                    onClick = { /* Añadir al carrito */ },
+                    onClick = { onAddToCart?.invoke(product) },
                     modifier = Modifier.weight(1f), // w-50
                     contentPadding = PaddingValues(0.dp)
                 ) {
@@ -154,7 +180,7 @@ fun ProductCard(product: Product) {
                     Text("Añadir", color = Color.Black)
                 }
             }
-            // fin de la tarjeta
+
         }
     }
 }

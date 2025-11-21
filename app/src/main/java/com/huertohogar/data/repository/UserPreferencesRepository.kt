@@ -10,33 +10,33 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// 💾 Inicializa DataStore a nivel de aplicación (Singleton implícito)
+// aca inicializamos DataStore a nivel de aplicacion osea (Singleton implicito)
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
 class UserPreferencesRepository(context: Context) {
 
     private val dataStore = context.dataStore
 
-    // 🔑 Claves para almacenar el estado de la sesión
+    // las Claves para el almacenamiento del estado de la sesión
     private object PreferencesKeys {
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         val USER_EMAIL = stringPreferencesKey("user_email")
     }
 
-    // 1. OBTENER EL ESTADO DE LOGUEO
+    // obtiene el estado de logueo
     // Devuelve un Flow<Boolean> observado por el ViewModel
     val isLoggedIn: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] ?: false
         }
 
-    // 2. OBTENER EL CORREO DEL USUARIO ACTUAL
+    //  obtiene el correo del usuario actual
     val userEmail: Flow<String?> = dataStore.data
         .map { preferences ->
             preferences[PreferencesKeys.USER_EMAIL]
         }
 
-    // 3. GUARDAR EL ESTADO DE LOGIN Y EL CORREO
+    // guarda el estado del login y su correo
     suspend fun saveLoginState(email: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = true
@@ -44,7 +44,7 @@ class UserPreferencesRepository(context: Context) {
         }
     }
 
-    // 4. BORRAR EL ESTADO DE SESIÓN (Logout)
+    // borra el estado de sesion osea el logout
     suspend fun clearLoginState() {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = false

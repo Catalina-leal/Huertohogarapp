@@ -13,11 +13,11 @@ import com.huertohogar.presentation.Screen
 import com.huertohogar.presentation.login.AuthViewModel
 import kotlinx.coroutines.delay
 
-// Simula la funcionalidad de Cierre_sesion.html
+// Simula la funcionalidad de Cierre_sesion
 @Composable
 fun LogoutScreen(navController: NavHostController, viewModel: AuthViewModel = viewModel()) {
 
-    // 💡 Ejecuta la lógica de cierre de sesión al cargar la pantalla
+    // jecuta la lógica de cierre de sesión al cargar la pantalla
     LaunchedEffect(Unit) {
         // viewModel.logout() // Llama a la función real de logout
         delay(1000) // Simula el tiempo de procesamiento

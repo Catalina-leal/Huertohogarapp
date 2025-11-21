@@ -7,13 +7,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign // ⬅️ IMPORTACIÓN FALTANTE
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
 @Composable
 fun Error404Screen(navController: NavHostController) {
-    Scaffold { paddingValues -> // Usamos Scaffold para manejar el padding superior correctamente
+    Scaffold { paddingValues -> //aca usamos Scaffold para el manejo el padding superior.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -34,8 +34,7 @@ fun Error404Screen(navController: NavHostController) {
                 Text("404", style = MaterialTheme.typography.displayLarge)
                 Text("Página No Encontrada", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 24.dp))
 
-                // 🔑 CORRECCIÓN: 'align =' se cambia a 'textAlign =' (el nombre correcto del parámetro)
-                // y usamos la importación directa 'TextAlign.Center'.
+
                 Text(
                     "Lo sentimos, la página que buscas no existe. Verifica la URL o vuelve a la página principal.",
                     style = MaterialTheme.typography.bodyLarge,
@@ -46,7 +45,7 @@ fun Error404Screen(navController: NavHostController) {
 
                 Button(
                     onClick = {
-                        // Regresa al inicio limpiando la pila de navegación
+                        // Regresa al inicio limpiando la pila de navegacion
                         navController.navigate(navController.graph.startDestinationId) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }

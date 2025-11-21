@@ -16,18 +16,23 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.huertohogar.presentation.Screen
-import android.app.Application // ⬅️ Necesario
-import androidx.lifecycle.viewmodel.compose.viewModel // ⬅️ Necesario para la función viewModel()
-import androidx.compose.ui.platform.LocalContext // ⬅️ Necesario para el contexto de la Factory
+import android.app.Application
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
 
-// Este código replica la funcionalidad de login.html
+// aca con este código replicamos la funcionalidad de login.html
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavHostController, viewModel: AuthViewModel = viewModel()) {
+fun LoginScreen(
+    navController: NavHostController,
+    viewModel: AuthViewModel = viewModel(
+        factory = AuthViewModel.Factory(LocalContext.current.applicationContext as Application)
+    )
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    // Estado de carga y error del ViewModel iría aquí
+
 
     Scaffold(topBar = { TopAppBar(title = { Text("Iniciar Sesión") }) }) { paddingValues ->
         Column(
@@ -62,11 +67,47 @@ fun LoginScreen(navController: NavHostController, viewModel: AuthViewModel = vie
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
             )
 
+            val authState by viewModel.uiState.collectAsState()
+            var showError by remember { mutableStateOf(false) }
+            var errorMessage by remember { mutableStateOf("") }
+
+            LaunchedEffect(authState) {
+                when (authState) {
+                    is AuthUiState.Success -> {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                    is AuthUiState.Error -> {
+                        errorMessage = (authState as AuthUiState.Error).message
+                        showError = true
+                        viewModel.resetUiState()
+                    }
+                    else -> Unit
+                }
+            }
+
             Button(
-                onClick = { /* viewModel.login(email, password) */ },
+                onClick = { viewModel.login(email, password) },
+                enabled = authState != AuthUiState.Loading && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
-                Text("Iniciar Sesión")
+                if (authState == AuthUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Iniciar Sesión")
+                }
+            }
+
+            if (showError) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             // Enlaces Olvido y Registro

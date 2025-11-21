@@ -1,10 +1,5 @@
-
 package com.huertohogar.ui.theme
 
-import HuertoDark
-import HuertoLight
-import HuertoPrimary
-import HuertoSecondary
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -16,27 +11,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-
 private val DarkColorScheme = darkColorScheme(
-    primary = HuertoPrimary,
-    secondary = HuertoSecondary,
-    tertiary = HuertoSecondary,
+    primary = EmeraldGreen,
+    secondary = MustardYellow,
+    tertiary = LightBrown,
     background = HuertoDark,
-    surface = HuertoDark,
+    surface = Color(0xFF222222),
     onPrimary = Color.White,
-    onSecondary = Color.White
+    onSecondary = Color.Black,
+    onTertiary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = HuertoPrimary,
-    secondary = HuertoSecondary,
-    tertiary = HuertoSecondary,
-    background = HuertoLight,
+    primary = EmeraldGreen,
+    secondary = MustardYellow,
+    tertiary = LightBrown,
+    background = BackgroundSoftWhite,
     surface = Color.White,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = HuertoDark,
-    onSurface = HuertoDark
+    onSecondary = Color.Black,
+    onTertiary = Color.White,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary
 )
 
 @Composable

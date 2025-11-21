@@ -5,11 +5,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Entidad de Room para representar un ítem en el carrito de compras.
+ * Nuestra entidad de Room para la representacion un ítem en el carrito de compras.
  */
 @Entity(tableName = "cart_items")
 data class CartItem(
-    // Clave primaria: ID del producto, asegura que solo haya una fila por producto.
+    // Clave primaria: ID del producto, aseguramos que solo haya una fila por producto.
     @PrimaryKey
     @ColumnInfo(name = "product_id")
     val productId: String,

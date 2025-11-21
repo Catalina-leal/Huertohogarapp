@@ -1,31 +1,30 @@
-// Archivo: Color.kt
-import androidx.compose.material3.darkColorScheme
+package com.huertohogar.ui.theme
+
 import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.lightColorScheme
 
-val HuertoPrimary = Color(0xFF3CB815) // Verde (#3CB815)
-val HuertoSecondary = Color(0xFFF65005) // Naranja (#F65005)
-val HuertoLight = Color(0xFFF7F8FC)
+/**
+ * Colores de HuertoHogar según especificación del proyecto
+ * Color de fondo principal: Blanco Suave (#F7F7F7)
+ * Verde Esmeralda (#2E8B57): Botones, enlaces, elementos interactivos
+ * Rojo (#DC143C): Ofertas especiales y promociones (cambiado de amarillo)
+ * Marrón Claro (#8B4513): Títulos y subtítulos
+ * Texto principal: Gris Oscuro (#333333)
+ * Texto secundario: Gris Medio (#666666)
+ */
+
+// Colores principales
+val BackgroundSoftWhite = Color(0xFFF7F7F7) // Blanco Suave
+val EmeraldGreen = Color(0xFF2E8B57) // Verde Esmeralda
+val MustardYellow = Color(0xFFDC143C) // Rojo (cambiado de amarillo)
+val LightBrown = Color(0xFF8B4513) // Marrón Claro
+
+// Colores de texto
+val TextPrimary = Color(0xFF333333) // Gris Oscuro
+val TextSecondary = Color(0xFF666666) // Gris Medio
+
+// Colores adicionales para Material 3
+val HuertoPrimary = EmeraldGreen
+val HuertoSecondary = MustardYellow
+val HuertoTertiary = LightBrown
+val HuertoLight = BackgroundSoftWhite
 val HuertoDark = Color(0xFF111111)
-
-// Definición de Esquemas de Colores MD3
-val LightColorScheme = lightColorScheme(
-    primary = HuertoPrimary,
-    onPrimary = Color.White,
-    secondary = HuertoSecondary,
-    onSecondary = Color.White,
-    background = HuertoLight,
-    surface = Color.White,
-    onSurface = HuertoDark
-)
-
-// DarkColorScheme (para el modo oscuro)
-val DarkColorScheme = darkColorScheme(
-    primary = HuertoPrimary,
-    onPrimary = Color.Black,
-    secondary = HuertoSecondary,
-    onSecondary = Color.Black,
-    background = HuertoDark,
-    surface = Color(0xFF222222),
-    onSurface = HuertoLight
-)

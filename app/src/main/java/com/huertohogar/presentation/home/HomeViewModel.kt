@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// 🧠 Definición de HomeUiState (Necesario para resolver errores en HomeScreen)
+//Definicion de HomeUiState, necesario para resolver errores en HomeScreen
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(
@@ -29,7 +29,7 @@ class HomeViewModel(
     private val repository: HomeRepository
 ) : ViewModel() {
 
-    // ESTADOS
+    // manejo de estados
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
 
@@ -50,8 +50,11 @@ class HomeViewModel(
     private fun loadHomeData() {
         viewModelScope.launch {
             try {
+                // Cargar testimonios una sola vez
+                val testimonials = repository.getTestimonials()
+                
+                // Observar productos y actualizar solo los productos
                 repository.getProducts().collect { products ->
-                    val testimonials = repository.getTestimonials()
                     _uiState.value = HomeUiState.Success(products, testimonials)
                 }
             } catch (e: Exception) {
@@ -60,8 +63,8 @@ class HomeViewModel(
         }
     }
 
-    fun addToCart(product: CartItem) = viewModelScope.launch {
-        repository.insertOrUpdateCartItem(product)
+    fun addToCart(item: CartItem) = viewModelScope.launch {
+        repository.insertOrUpdateCartItem(item)
     }
 
     fun clearCart() = viewModelScope.launch {
@@ -69,17 +72,18 @@ class HomeViewModel(
     }
 
 
-    // 🔑 FACTORY para instanciar el ViewModel con dependencias
+    // factory para la instancia del ViewModel con dependencias
     class Factory(private val application: Application) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
 
-                // 1. Obtener el DAO a través del singleton de la base de datos
+                // Obtiene los DAOs a través del singleton de la base de datos
                 val database = AppDatabase.getDatabase(application)
                 val cartDao = database.cartDao()
+                val productDao = database.productDao()
 
-                // 2. Crear el Repositorio con el DAO
-                val repository = HomeRepository(cartDao)
+                // Crea el Repositorio con los DAOs
+                val repository = HomeRepository(cartDao, productDao)
 
                 @Suppress("UNCHECKED_CAST")
                 return HomeViewModel(repository) as T

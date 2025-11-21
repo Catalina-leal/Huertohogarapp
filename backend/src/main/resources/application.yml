@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: huertohogar-api
+  
+  # Configuración de base de datos
+  datasource:
+    url: jdbc:h2:mem:huertohogar
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  
+  # H2 Console (solo para desarrollo)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # CORS Configuration
+  web:
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+      allow-credentials: true
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+# JWT Configuration
+jwt:
+  secret: huertohogar-secret-key-change-in-production-min-256-bits
+  expiration: 86400000 # 24 horas en milisegundos
+
+# Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# Logging
+logging:
+  level:
+    com.huertohogar: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
