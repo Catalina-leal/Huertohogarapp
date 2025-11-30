@@ -17,36 +17,31 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import com.huertohogar.data.model.ProductDao
 
-
 class HomeViewModelTest {
-    
+
     private lateinit var repository: HomeRepository
     private lateinit var viewModel: HomeViewModel
-    
+
     @BeforeEach
-    fun setup() {
+    fun `preparar escenario`() {
         repository = mockk()
         val productDao = mockk<ProductDao>()
         viewModel = HomeViewModel(repository)
     }
-    
+
     @Test
-    fun `should emit loading state initially`() = runTest {
-        // Given
+    fun `deberia emitir estado loading inicialmente`() = runTest {
         coEvery { repository.getProducts() } returns flowOf(emptyList())
         coEvery { repository.getCartItems() } returns flowOf(emptyList())
-        
-        // When
+
         viewModel.uiState.test {
-            // Then
             val state = awaitItem()
             state.shouldBeInstanceOf<HomeUiState.Loading>()
         }
     }
-    
+
     @Test
-    fun `should emit success state with products and testimonials`() = runTest {
-        // Given
+    fun `deberia emitir estado success con productos y testimonios`() = runTest {
         val products = listOf(
             Product(
                 id = "1",
@@ -66,27 +61,24 @@ class HomeViewModelTest {
                 imageUrlName = "test"
             )
         )
-        
+
         coEvery { repository.getProducts() } returns flowOf(products)
         coEvery { repository.getTestimonials() } returns testimonials
         coEvery { repository.getCartItems() } returns flowOf(emptyList())
-        
-        // When
+
         viewModel.uiState.test {
             skipItems(1) // Skip loading
             val state = awaitItem()
-            
-            // Then
+
             state.shouldBeInstanceOf<HomeUiState.Success>()
             val successState = state as HomeUiState.Success
             successState.products shouldBe products
             successState.testimonials shouldBe testimonials
         }
     }
-    
+
     @Test
-    fun `should add item to cart`() = runTest {
-        // Given
+    fun `deberia agregar item al carrito`() = runTest {
         val cartItem = CartItem(
             productId = "1",
             name = "Manzana",
@@ -94,45 +86,37 @@ class HomeViewModelTest {
             quantity = 1,
             imageUrl = "test"
         )
-        
+
         coEvery { repository.insertOrUpdateCartItem(any()) } returns Unit
         coEvery { repository.getCartItems() } returns flowOf(listOf(cartItem))
         coEvery { repository.getProducts() } returns flowOf(emptyList())
-        
-        // When
+
         viewModel.addToCart(cartItem)
-        
-        // Then
+
         coVerify(exactly = 1) { repository.insertOrUpdateCartItem(cartItem) }
     }
-    
+
     @Test
-    fun `should clear cart`() = runTest {
-        // Given
+    fun `deberia vaciar carrito`() = runTest {
         coEvery { repository.clearCart() } returns Unit
         coEvery { repository.getCartItems() } returns flowOf(emptyList())
         coEvery { repository.getProducts() } returns flowOf(emptyList())
-        
-        // When
+
         viewModel.clearCart()
-        
-        // Then
+
         coVerify(exactly = 1) { repository.clearCart() }
     }
-    
+
     @Test
-    fun `should emit error state on exception`() = runTest {
-        // Given
+    fun `deberia emitir estado error en excepcion`() = runTest {
         val errorMessage = "Network error"
         coEvery { repository.getProducts() } throws Exception(errorMessage)
         coEvery { repository.getCartItems() } returns flowOf(emptyList())
-        
-        // When
+
         viewModel.uiState.test {
             skipItems(1) // Skip loading
             val state = awaitItem()
-            
-            // Then
+
             state.shouldBeInstanceOf<HomeUiState.Error>()
             val errorState = state as HomeUiState.Error
             errorState.message shouldBe "Fallo la conexión: $errorMessage"

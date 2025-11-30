@@ -13,61 +13,61 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class CartViewModelTest {
-    
+
     private lateinit var repository: HomeRepository
     private lateinit var viewModel: CartViewModel
-    
+
     @BeforeEach
-    fun setup() {
-        repository = mockk()
-        viewModel = CartViewModel(repository, mockk())
+    fun prepararEscenario() {
+        repository = mockk(relaxed = true)
+        viewModel = CartViewModel(repository, mockk(relaxed = true))
     }
-    
+
     @Test
-    fun `should calculate total amount correctly`() = runTest {
-        // Given
+    fun `deberia calcular el monto total correctamente`() = runTest {
+        // Dado
         val items = listOf(
-            CartItem("1", "Product 1", 1000.0, 2, "img1"),
-            CartItem("2", "Product 2", 500.0, 3, "img2")
+            CartItem("1", "Producto 1", 1000.0, 2, "img1"),
+            CartItem("2", "Producto 2", 500.0, 3, "img2")
         )
         coEvery { repository.getCartItems() } returns flowOf(items)
-        
-        // When
+
+        // Cuando & Entonces
         viewModel.cartItems.test {
             val cartItems = awaitItem()
-            
-            // Then
+
             viewModel.totalAmount shouldBe 3500.0 // (1000 * 2) + (500 * 3)
-            viewModel.itemCount shouldBe 5 // 2 + 3
+            viewModel.itemCount shouldBe 5        // 2 + 3
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
-    
+
     @Test
-    fun `should update quantity correctly`() = runTest {
-        // Given
-        val item = CartItem("1", "Product 1", 1000.0, 1, "img1")
+    fun `deberia actualizar la cantidad correctamente`() = runTest {
+        // Dado
+        val item = CartItem("1", "Producto 1", 1000.0, 1, "img1")
         coEvery { repository.getCartItems() } returns flowOf(listOf(item))
         coEvery { repository.insertOrUpdateCartItem(any()) } returns Unit
-        
-        // When
+
+        // Cuando
         viewModel.updateQuantity("1", 5)
-        
-        // Then
+
+        // Entonces
         coVerify { repository.insertOrUpdateCartItem(any()) }
     }
-    
+
     @Test
-    fun `should remove item when quantity is zero`() = runTest {
-        // Given
-        val item = CartItem("1", "Product 1", 1000.0, 1, "img1")
+    fun `deberia eliminar el item cuando la cantidad es cero`() = runTest {
+        // Dado
+        val item = CartItem("1", "Producto 1", 1000.0, 1, "img1")
         coEvery { repository.getCartItems() } returns flowOf(listOf(item))
         coEvery { repository.insertOrUpdateCartItem(any()) } returns Unit
-        
-        // When
+
+        // Cuando
         viewModel.updateQuantity("1", 0)
-        
-        // Then
-        // Should call remove or update with quantity 0
+
+        // Entonces
         coVerify { repository.insertOrUpdateCartItem(any()) }
     }
 }

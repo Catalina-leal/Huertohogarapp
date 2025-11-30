@@ -114,6 +114,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.material3)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.junit.jupiter)
     ksp("androidx.room:room-compiler:2.8.3")
 
     // Soporte para Navigation Runtime (Original)
@@ -172,6 +173,7 @@ dependencies {
     // AndroidX Test
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.junit.jupiter)
     
     // Compose UI Test
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -186,4 +188,11 @@ dependencies {
     
     // Room testing
     testImplementation("androidx.room:room-testing:2.8.3")
+    testImplementation("io.mockk:mockk:1.13.10")
+
+
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

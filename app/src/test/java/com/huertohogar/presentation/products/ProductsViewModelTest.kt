@@ -18,13 +18,13 @@ class ProductsViewModelTest {
     private lateinit var viewModel: ProductsViewModel
 
     @BeforeEach
-    fun setup() {
+    fun `preparar escenario`() {
         repository = mockk()
         viewModel = ProductsViewModel(repository)
     }
 
     @Test
-    fun `should load products on init`() = runTest {
+    fun `deberia cargar productos al iniciar`() = runTest {
         val products = listOf(
             Product(
                 id = "1",
@@ -48,7 +48,7 @@ class ProductsViewModelTest {
     }
 
     @Test
-    fun `should filter products by category`() = runTest {
+    fun `deberia filtrar productos por categoria`() = runTest {
         val allProducts = listOf(
             Product(
                 id = "1",
@@ -85,7 +85,7 @@ class ProductsViewModelTest {
     }
 
     @Test
-    fun `should search products`() = runTest {
+    fun `deberia buscar productos`() = runTest {
         val query = "manzana"
         val searchResults = listOf(
             Product(

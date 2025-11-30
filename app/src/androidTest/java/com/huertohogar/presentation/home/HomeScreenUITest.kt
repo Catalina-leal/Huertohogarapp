@@ -30,8 +30,7 @@ class HomeScreenUITest {
         
         // When
         composeTestRule.setContent {
-            // HomeScreen would need navController, but for testing we can mock it
-            // This is a simplified version
+
         }
         
         // Then
@@ -80,7 +79,7 @@ class HomeScreenUITest {
         
         // When
         composeTestRule.setContent {
-            // HomeScreen setup
+
         }
         
         // Then
