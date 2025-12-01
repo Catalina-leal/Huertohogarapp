@@ -1,0 +1,13 @@
+# Template de configuración local
+# Copia este archivo a local.properties y completa los valores
+
+# Configuración de Keystore para firma de APK
+# Descomenta y completa cuando tengas el keystore generado
+
+# KEYSTORE_FILE=keystore/release.keystore
+# KEYSTORE_PASSWORD=tu_password_aqui
+# KEY_ALIAS=huertohogar
+# KEY_PASSWORD=tu_password_aqui
+
+# Configuración de SDK (si es necesario)
+# sdk.dir=/Users/tu_usuario/Library/Android/sdk
